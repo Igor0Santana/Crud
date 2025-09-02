@@ -43,11 +43,11 @@ public class Application {
         con.setRequestMethod("POST");
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", "application/json; charset=UTF-8'");
-        con.setConnectTimeout(5000); 
+        con.setConnectTimeout(5000);
         con.setReadTimeout(5000);
 
         try (OutputStream os = con.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"))) {
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"))) {
             writer.write(mapper.writeValueAsString(post));
             writer.flush();
         }
@@ -56,17 +56,51 @@ public class Application {
         return con.getResponseCode();
     }
 
-    public int updatePost(int postId) {
+    public int updatePost(Integer id, Post post) throws IOException {
+        URL url = URI.create("https://jsonplaceholder.typicode.com/posts/" + id).toURL();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("PUT");
+        con.setDoOutput(true);
+        con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        con.setConnectTimeout(5000);
+        con.setReadTimeout(5000);
 
+        try (OutputStream os = con.getOutputStream();
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"))) {
+            writer.write(mapper.writeValueAsString(post));
+            writer.flush();
+        }
+
+        con.connect();
+        return con.getResponseCode();
     }
+
+    public int deletePost(Integer id) throws IOException {
+        URL url = URI.create("https://jsonplaceholder.typicode.com/posts/" + id).toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("DELETE");
+        int responseCode = connection.getResponseCode();
+        connection.disconnect();
+        return responseCode;
+    }
+
 
     public static void main(String[] args) throws IOException {
         Application app = new Application();
         Post post = app.fetchPost(10);
-        System.out.println(app.writeObjectAsStringJson(post));
+        System.out.println("Postagem Original: " + app.writeObjectAsStringJson(post));
 
         Post novoPost = new Post(101, 12345, "Teste title", "teste body");
         int statusCode = app.createPost(novoPost);
-        System.out.println(statusCode);
+        System.out.println("Status da Criação: " + statusCode);
+
+        post.setTitle("Título Alterado");
+        post.setBody("Corpo do post alterado");
+        int updateStatusCode = app.updatePost(10, post);
+        System.out.println("Status da Atualização: " + updateStatusCode);
+        System.out.println("Postagem Alterada: " + app.writeObjectAsStringJson(post));
+
+        int deleteStatusCode = app.deletePost(10);
+        System.out.println("Status do Delete: " + deleteStatusCode);
     }
 }
